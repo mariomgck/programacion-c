@@ -1,0 +1,12 @@
+data/carmodel.mm
+0.75 0.25
+9
+data/image1.ppm 256 256 data/model.view -1.0  1.0 0.0 0.0
+data/image2.ppm 256 256 data/model.view -0.5  1.0 0.0 0.0
+data/image3.ppm 256 256 data/model.view -0.0  1.0 0.0 0.0
+data/image4.ppm 256 256 data/model.view  0.5  1.0 0.0 0.0
+data/image5.ppm 256 256 data/model.view  1.0  1.0 0.0 0.0
+data/image6.ppm 256 256 data/model.view  1.0  0.5 0.0 0.0
+data/image7.ppm 256 256 data/model.view  1.0  0.0 0.0 0.0
+data/image8.ppm 256 256 data/model.view  1.0 -0.5 0.0 0.0
+data/image9.ppm 256 256 data/model.view  1.0 -1.0 0.0 0.0

@@ -1,0 +1,349 @@
+Copyright 2002
+Center for Biological and Computational Learning at MIT and MIT
+All rights reserved.
+Permission to copy this software, and its documentation only for internal
+research use in your organization is hereby granted, provided that this
+notice is retained thereon and on all copies. A patent protects the
+underlying algorithm. This software should not be distributed to anyone
+outside of your organization without explicit written authorization by the
+author(s) and MIT. It should not be used for commercial purposes without
+specific permission from the authors and MIT. MIT also requires written
+authorization by the author(s) to publish results obtained with the data
+or software and possibly citation of relevant CBCL reference papers.
+We make no representation as to the suitability and operability of this
+data or software for any purpose. It is provided "as is" without express
+or implied warranty.
+
+---------------------------------
+
+This copyright is unfortunately necessary.  The algorithms in this
+software are under patent.  This package is for academic use only.
+If you have any questions, please contact the author, Christian Shelton,
+at cshelton@ai.mit.edu
+
+---------------------------------
+
+HOW TO COMPILE:
+
+This code was written for an SGI, ported to Linux, modified to run
+without OpenInventor, and adjusted for the current C++ variable bindings
+and templates.  It therefore is a bit of a mess.
+
+It requires xforms (the .h file is supplied here as is the .a library file
+for linux).
+
+To compile, "make all" should be all that is necessary.  However, if you
+are not compiling on a standard Linux box, this might not work.  Editing
+the makefile shouldn't be too hard, but you are on your own.
+
+---------------------------------
+
+ABOUT THE SOFTWARE:
+
+This software set was written to automatically produce morphable models
+from a set of example surfaces.  It is probably best explained by the paper
+I wrote "Morphable Surface Models" by Christian R.  Shelton that appeared
+in the International Journal of Computer Vision, 38(1), 75-91 in 2000.
+
+At this point (November 2002), I have tried to clean up the code as best
+as possible and produce something that can be used by others.  However, it
+has been over three years since I last used it and so the code is in
+varying degrees of "decay."  Some of it is well-written.  Much of it is
+not.  I would certainly do a number of things differently if I were to
+reimplement the algorithm and I would probably design the algorithm very
+differently were I to restart the research path from scratch.
+
+I am not in a position to maintain this software.  I am supplying it due to
+requests, but I have no desire to fix bugs, improve the algorithm, add
+features, explain how to compile, etc.
+
+That said, here's a quick description of how the bits and pieces go
+together:
+
+File Formats:
+-------------
+
+The program understands a number of different file formats.
+
+Surface descriptions:
+.tm:  Triangle Mesh, the internal format of the program.  Best to convert
+	everything to this if possible.  All meshes are written in this
+	format.
+.ppm: Image (a 2D surface) which, on reading, it converted into a set of
+	triangles.
+.dat: A file format from a pen-and-tablet system.  I can't remember the
+	details anymore.
+.vtk: A *very* limited version of the VTK description.  Probably only
+	useful for the project I wrote it for.
+.iv:  On an SGI, the files invreader.[h|cpp] contain a class that will
+	convert an open inventor file to a triangle mesh.  VRML can often
+	be converted to iv (just by changing the header sometimes).  You
+	mileage may vary.  You will have to write your own main function
+	(it shouldn't be too hard after looking at the header file)
+
+Other formats:
+.mm:  A morphable model -- a base triangle mesh with a set of
+	displacements.
+
+The following file types do not have to have any particular extension:
+.view: viewing parameters for rendering a shape.
+.params: One of two parameter files:
+	1.  A warp parameter file with the parameters to the correspondence
+	algorithm.
+	2.  A model-building parameter file with the parameters to the
+	morphable model bootstrapping program.
+
+Programs:
+---------
+xdraw:  xdraw is the viewing program.  It takes a model (or just a single
+surface) and draws it.  It takes two parameters.  The first is the model or
+surface to load and the second is the viewing parameters to initially view
+the model from.  The sliders around the main viewing window control the
+rotation of the object and the scale.  The radio buttons on the side
+control the rendering options.  Fast render performs some aggressive culling
+before rendering.  Bounds displays only the bounding box.  Outlines
+outlines each triangle.  Split takes the extra time to determine if two
+triangles from the surface intersect and if so, renders them correctly by
+splitting.  And color controls whether the color of the surface is
+displayed.
+
+The buttons do various things.  Not all of which are useful.  The ones
+beside the viewing area allow the viewing conditions to be saved or loaded,
+the model to be saved or loaded, or an image (in either ppm or postscript
+format) to be captured of the current view.
+
+If the model has morphable parameters, sliders for each parameter appear
+in the upper right corner of the window.  Their maximum and minimum range
+can be adjusted via the (misnamed) "2x scale" and "1/2 scale" buttons.
+The "match" button will prompt for a shape and attempt to match the
+morphable model to the shape by tuning these parameters.
+
+The "warp" button will prompt for a shape and a warp parameter file and
+will execute the correspondence algorithm.  The process can be viewed in
+the rendering window.  Unfortunately, the new correspondence is not added
+to the model.  To build a model from correspondences, use the bootmodel
+program (see below).
+
+
+brender:  brender is a batch rendering program.  It renders a set of .ppm
+files based on an input "script" file.  Running brender without any
+arguments describes the file's format.
+
+
+buildlevels:  buildlevels takes a single surface and an output file stem
+and produces a set of simplified surfaces (just as the correspondence
+algorithm will).  As it produces the simplified surfaces (using Garland's
+and Heckbert's Quadric Error Metrics), it prints the (normalized) distance
+of each mesh to original mesh.  A cutoff value for this sequence is
+important as a parameter to the correspondence algorithm.
+
+
+bootmodel:  This program builds the morphable model from a set of example
+surfaces.  It works by taking the first model as the base model and then
+matching it to each of the other models.  If desired, it then performs a
+SVD on the resulting set of displacement vectors and takes only the highest
+eigenvectors (the EV with the largest eigenvalues) representing the most
+significant axes of change in the shapes.  It then constructs a morphable
+model of these eigenvectors and repeats the process, matching the model to
+each shape before performing the correspondence (in hope to improve the
+correspondence).  It takes the largest eigenvectors of this new set of
+correspondences and repeats until all axes of variation have been added.
+For large datasets, these repeated "bootstrapping" helps greatly in
+arriving at good correspondences for all models.  For small models, it is
+of little help.
+
+The program takes two necessary parameters:  a bootstrap parameter file and
+the output filename.  It optionally takes three additional parameters:  the
+number of processors over which to distribute the computation, the fraction
+of the maximum eigenvalue to set the cutoff for each bootstrapping step,
+and an optional input model.  After each bootstrap iteration, it saves the
+model to the output filename, so if the program is interrupted, the last
+written model can be used as the input model to continue where the program
+left off.  If left off, the program is run with 1 processor, 0.95 as the
+fraction, and no initial model.  If the fraction is set > 1.0, no SVD is
+done and instead all found correspondences are used directly as the
+parameters of the model.
+
+
+An Example:
+-----------
+Along with the code and Makefile, the directory data/ contains three
+surfaces of cars (converted to the .tm file format):  model1.tm, model2.tm,
+model3.tm.  These are free models and were found using the 3D shape search
+engine at http://shape.cs.princeton.edu/  They have been centered around
+the origin (well, almost... the y-axis -- the vertical axis -- has been set
+so that the base of the car is a 0 and the rest of the car is all in the
+positive half) and scaled to be roughly the same size.
+
+It is unfortunate that these models do not have color.  The algorithm
+matches based on color as well (colored models are surfaces in 6D with
+co-dimension 2).  However, I could not find any free models that had nice
+color schemes (or at least not more than one of any given shape type).
+
+As an example of how to build a morphable model, here are the steps I took
+to build a model from these three cars.  The necessary and resulting files
+are also in the data/ directory.
+
+1.  Reduce each car model.
+For each model I ran the buildlevels program.  As an example, for model 3:
+
+>./buildlevels data/model3.tm data/model3
+loading data/model3.tm
+level 1: 0.0271316
+level 2: 0.0279304
+level 3: 0.0299491
+level 4: 0.0480181
+level 5: 0.111664
+
+This produced the meshes data/model3.0.tm, data/model3.1.tm, ... ,
+data/model3.5.tm where data/model3.0.tm is the original mesh and
+data/model3.5.tm is a very rough version of the original mesh.
+I then looked at each of the models (using a command like
+./xdraw data/model3.2.tm data/model.view) and decided that not all of
+these levels were valid.  For example, for model3.tm, levels 4 and 5 do
+not look anything like a car and probably will not be useful for matching.
+Therefore, looking at the distances listed after each level for all three
+cars, I decided to cut the levels at a distance of 0.3 (this number will
+be used later).
+
+I then removed the produced models (after looking at them) as they aren't
+needed (ie they are regenerated as needed).
+
+
+2.  Pick a base model.
+This was simple; the car model3.tm has the most detail and therefore could
+best morph to match the others.  model3.tm will therefore be used as the
+base model.
+
+
+3.  Tune the corresponding algorithm's parameters.
+This is the trickiest part.  Below in the next section are the parameters
+and a brief description.  I usually load the model (and a good viewing
+angle, like data/model.view) into xdraw and use xdraw (the warp button) to
+perform a sample correspondence (or warp) to a new surface.  If things go
+well, I'm all set.  Usually, based on how the warp happened, I adjust the
+parameters a bit and try again.  If the same set of parameters work for
+two or three of the models in the set, they will probably work for all
+the models, and you are done.  In this case, I found that the parameter
+file data/warp.params work well.
+
+
+4.  Bootstrap the model.
+Run bootstrap with a data file that contains the warp parameters, the
+number of models, and a list of each model (with the base model first).
+data/carmodel.params is the file I used.  In this case, I chose to execute
+bootmodel as:
+./bootmodel data/carmodel.params data/carmodel.mm 1 0.0
+which uses the data/carmodel.params input file and produces the
+data/carmodel.mm morphable model.  It uses only one processor (instead of
+using pthreads to split up the computation) and on the first pass it takes
+all of the eigenvectors.
+
+
+5.  Look at the model.
+This part is easy (and fun?).  In this case I ran
+./xdraw data/carmodel.mm data/model.view
+to look at the model (from an initial nice viewing point).  There are 4
+sliders because the numeric precision wasn't exact and so the last two
+do not have any variation (that is three sample point lie on a plane;
+the other two dimensions have no variation).  They are scaled so that a
+parameter of +1 (or -1) corresponds to 1 standard deviation of change.
+Moving much past 1 or 1.5 std. usually causes the model to look quite bad.
+
+
+6. Generate a series of images.
+Not really necessary, but part of the example, I generated 9 images of the
+car changing shape.  The file data/morph.render was the input file to
+brender and the files data/image[0-9].ppm are the output images.
+
+
+
+Parameter files:
+----------------
+
+Warp parameter file
+-------------------
+
+The warp parameter file (and example in data/warp.params) has the following
+set of parameters, most of which make more sense if you've read the paper.
+Each are separated by white space.
+
+name                        description
+---------------------------------------------------------
+gamma                       color-to-space ratio
+alpha0                      starting structure coefficient
+zeta0                       user defined springs coeff.
+eta                         alpha multiplier
+xi                          zeta multiplier
+rho                         match rotation coeff.
+epsilon                     smoothness coeff.
+match plane?                <0 -> match to point, >=0 -> match to plane
+add vertices?               <0 -> vertices + sampled, >=0 -> sampled points
+n                           number of samples points per vertex
+max springs                 max springs from a vertex not attached to neighbors
+t0                          number of iterations at highest detail
+t                           number of iterations at other detail levels
+cut level                   distance cut off for detail levels
+version #                   algorithm version number to use (use 4!)
+
+If things are warping correctly, here are few tips on how the parameters
+affect things.
+
+gamma:  Set higher to make color more important for the match
+
+alpha0:  Set higher to force the structure to be kept for longer
+
+zeta0:  Not useful as described here.  You can (although you'd have to edit
+the code to pull the hooks back out) add a set of manual correspondences
+and have the program add those and try to adhere to them.  This coefficient
+specifies the strength of those correspondences.
+
+eta:  How quickly the structure power dies off.  Each iteration, alpha is
+multiplied by this factor (this might not be the best annealing rate... I'm
+sure much could be done to improve this).  A few calculations to figure out
+where alpha will start (alpha0) and where alpha will end
+(alpha0*eta^(t0+mt), if m is the number of levels not including the base
+level) help a lot in determining how changes to alpha0, eta, t0, and t will
+affect the algorithm.
+
+xi: xi is to zeta0 what eta is to alpha0
+
+rho:  Instead of matching the closest point, the algorithm can also take
+into account the rotational angle of the two surfaces involved.  The higher
+this number the more the rotation is considered.
+
+epsilon:  A small, but positive number is necessary to insure that vertices
+don't fly off or overlap (too much).  If the shape ends up being too
+rounded, chances are this term is too high.
+
+match plane:  If this is negative, points are matched to other points.  If
+this is positive, points are matched to the plane of the nearest triangle.
+It is unclear if this helps or hinders the algorithm.
+
+add vertices:  If this is negative, the vertices are added to the set of
+sampled points.  Otherwise only a set of sampled points are used.  Again,
+it in unclear whether this is useful.
+
+n:  The number of points to sample per vertex.  Higher numbers take longer
+to compute, but result in more exact gradients.  On the other hand, a bit
+of randomness in the gradient can help get out of local minima.
+
+max springs:  In order to keep structure, springs are connected (virtually
+of course :) ) between each vertex and its neighbors.  However, often this
+is not enough to keep the correct shape (especially when two surfaces are
+near each other but distinct, like the tires and the body of the car).
+Therefore, springs are also added between each vertex and near-by points
+(in terms of absolute distance).  Too many springs and the surface will
+have a hard time moving.  Too few springs and it may act like jelly.
+
+t0, t:  These can generally be set to the same value (unless you really
+want to refine at the last level).  Remember that this interact with alpha
+and eta in a strange way.
+
+bootmodel parameter file
+-------------------------
+
+This parameter file (see data/carmodel.params as an example) has one line
+with the filename of the warp parameter file (as above) followed by the
+number of models, followed by the filenames of each model in turn (with the
+first model being the base model).

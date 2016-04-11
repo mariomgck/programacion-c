@@ -1,0 +1,22 @@
+El proyecto esta dividido de la siguiente manera.
+
++ examples: contiene los programas de prueba para realizar el morphing, 
+	el principal corresponde a "rendering", el cual se encarga de 
+	elaborar todo el proceso de deformación entre dos mallas y generar
+	las imagenes de cada deformación.
+
++ framework: Contiene el código necesario para la realización de las deformaciones,
+	este se encuentra dividido por modulos en la carpeta src. Los modulos son 
+	los siguientes:
+		+ containers : Contiene todas las clases asociadas a estructura de datos.
+		+ geometry: Contiene todas las clases asociadas a formas geométricas, como
+		son las mallas, vertices, etc.
+		+ image: Contiene todas las clases encargadas de representar y almacenar 
+		imágenes.
+		+ loaders: Contiene todas las clases encargadas de la lectura y escritura
+		de los diferentes tipos de archivos empleados en los programas.
+		+ matrix: Contiene las clases encargadas de realizar operaciones matriciales.
+		+ morphing: Modulo principal que contiene las funciones de deformación y la 
+		medología empleada del trabajo de investigación.
+		+ warping: Modulo encargado de almacenar todas las clases que se emplean
+		en el proceso de warping.
