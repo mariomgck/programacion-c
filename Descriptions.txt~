@@ -1,6 +1,3 @@
-La carpeta framework debe tener la carpeta obj, por alguna razón no se anexo 
-al repositorio.
-
 El proyecto esta dividido de la siguiente manera.
 
 + examples: contiene los programas de prueba para realizar el morphing, 
